@@ -36,7 +36,7 @@ def token():
 @app.route('/outgoing', methods=['GET', 'POST'])
 def outgoing():
   resp = twilio.twiml.Response()
-  resp.say("Congratulations! You have made your first oubound call! Good bye.")
+  resp.say("Hi Hasgar, You reached here.")
   return str(resp)
 
 @app.route('/incoming', methods=['GET', 'POST'])
