@@ -11,7 +11,7 @@ API_KEY = 'SK8da006e1829574ba2c001b2cb2e32374'
 API_KEY_SECRET = 'NxX9RhmwLmI7kU7Bbc82lI5ZZPloFRSo'
 PUSH_CREDENTIAL_SID = 'CR***'
 APP_SID = 'APe5466dfd872ba9bc47f01e4a83f0d291'
-
+AUTH_TOKEN = '7dc2af01933bb2ef058c61f01917985e'
 
 IDENTITY = 'voice_test'
 CALLER_ID = 'quick_start'
@@ -26,7 +26,7 @@ def token():
   push_credential_sid = PUSH_CREDENTIAL_SID
   app_sid = os.environ.get("APP_SID", APP_SID)
   auth_token = os.environ.get("AUTH_TOKEN", AUTH_TOKEN)
-  AUTH_TOKEN
+ 
 
   grant = VoiceGrant(
     push_credential_sid=push_credential_sid,
