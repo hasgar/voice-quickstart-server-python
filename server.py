@@ -9,7 +9,7 @@ API_KEY = 'SK***'
 API_KEY_SECRET = '***'
 PUSH_CREDENTIAL_SID = 'CR***'
 APP_SID = 'AP***'
-
+AUTH_TOKEN = "***"
 IDENTITY = 'voice_test'
 CALLER_ID = 'quick_start'
 
@@ -20,8 +20,10 @@ def token():
   account_sid = os.environ.get("ACCOUNT_SID", ACCOUNT_SID)
   api_key = os.environ.get("API_KEY", API_KEY)
   api_key_secret = os.environ.get("API_KEY_SECRET", API_KEY_SECRET)
-  push_credential_sid = os.environ.get("PUSH_CREDENTIAL_SID", PUSH_CREDENTIAL_SID)
+  push_credential_sid = PUSH_CREDENTIAL_SID
   app_sid = os.environ.get("APP_SID", APP_SID)
+  auth_token = os.environ.get("AUTH_TOKEN", AUTH_TOKEN)
+  AUTH_TOKEN
 
   grant = VoiceGrant(
     push_credential_sid=push_credential_sid,
@@ -35,8 +37,12 @@ def token():
 
 @app.route('/outgoing', methods=['GET', 'POST'])
 def outgoing():
-  resp = twilio.twiml.Response()
-  resp.say("Hi Hasgar, You reached here.")
+  client = Client(account_sid, auth_token)
+  call = client.calls.create(
+    to="+14155551212",
+    from_="+18652344422",
+    url="http://demo.twilio.com/docs/voice.xml"
+)
   return str(resp)
 
 @app.route('/incoming', methods=['GET', 'POST'])
