@@ -43,7 +43,7 @@ def outgoing():
     from_="+18652344422",
     url="http://demo.twilio.com/docs/voice.xml"
 )
-  return str(resp)
+  return str(call)
 
 @app.route('/incoming', methods=['GET', 'POST'])
 def incoming():
