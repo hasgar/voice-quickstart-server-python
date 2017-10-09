@@ -1,98 +1,64 @@
+#!/usr/bin/env python
+
 import os
-from flask import Flask, request
-from twilio.jwt.access_token import AccessToken, VoiceGrant
-from twilio.rest import Client
-import twilio.twiml
+import re
+from flask import Flask, jsonify, request, Response
+from faker import Factory
+from twilio.jwt.client import ClientCapabilityToken
+from twilio.twiml.voice_response import VoiceResponse, Dial
 
-ACCOUNT_SID = 'AC***'
-API_KEY = 'SK***'
-API_KEY_SECRET = '***'
-PUSH_CREDENTIAL_SID = 'CR***'
-APP_SID = 'AP***'
-AUTH_TOKEN = '***'
-
-IDENTITY = 'voice_test'
-CALLER_ID = 'quick_start'
-MODERATOR = '+919020708979'
 app = Flask(__name__)
+fake = Factory.create()
+alphanumeric_only = re.compile('[\W_]+')
+phone_pattern = re.compile(r"^[\d\+\-\(\) ]+$")
+TWILIO_ACCOUNT_SID = 'AC***'
+TWILIO_AUTH_TOKEN = '***'
+TWILIO_CALLER_ID = '+1***'
+TWILIO_TWIML_APP_SID = 'AP***'
 
-@app.route('/accessToken')
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
+
+
+@app.route('/token', methods=['GET'])
 def token():
-  account_sid = os.environ.get("ACCOUNT_SID", ACCOUNT_SID)
-  api_key = os.environ.get("API_KEY", API_KEY)
-  api_key_secret = os.environ.get("API_KEY_SECRET", API_KEY_SECRET)
-  push_credential_sid = os.environ.get("PUSH_CREDENTIAL_SID", PUSH_CREDENTIAL_SID)
-  app_sid = os.environ.get("APP_SID", APP_SID)
-  auth_token = os.environ.get("AUTH_TOKEN", AUTH_TOKEN)
- 
+    # get credentials for environment variables
+    account_sid = os.environ.get("TWILIO_ACCOUNT_SID", TWILIO_ACCOUNT_SID)
+    auth_token = os.environ.get("TWILIO_AUTH_TOKEN", TWILIO_AUTH_TOKEN)
+    application_sid = os.environ.get("TWILIO_TWIML_APP_SID", TWILIO_TWIML_APP_SID)
 
-  grant = VoiceGrant(
-    push_credential_sid=push_credential_sid,
-    outgoing_application_sid=app_sid
-  )
+    # Generate a random user name
+    identity = alphanumeric_only.sub('', fake.user_name())
 
-  token = AccessToken(account_sid, api_key, api_key_secret, IDENTITY)
-  token.add_grant(grant)
+    # Create a Capability Token
+    capability = ClientCapabilityToken(account_sid, auth_token)
+    capability.allow_client_outgoing(application_sid)
+    capability.allow_client_incoming(identity)
+    token = capability.to_jwt()
 
-  return str(token)
+    # Return token info as JSON
+    return jsonify(identity=identity, token=token.decode('utf-8'))
 
-@app.route('/outgoing', methods=['GET', 'POST'])
-def outgoing():
-  resp = twilio.twiml.Response()
-  client = Client(os.environ.get("ACCOUNT_SID", ACCOUNT_SID), os.environ.get("AUTH_TOKEN", AUTH_TOKEN))
-  
-  # Make the call 
-  call = client.api.account.calls\
-      .create(to="+919020708979",  # Any phone number
-              from_="+12517322701 ", # Must be a valid Twilio number
-  url="http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient")
-  resp.say("Your call is connecting, please wait.")
-  return str(resp)
 
-@app.route('/incoming', methods=['GET', 'POST'])
-def incoming():
-  resp = twilio.twiml.Response()
-  resp.say("Congratulations! You have received your first inbound call! Good bye.")
-  return str(resp)
-
-@app.route('/placeCall', methods=['GET', 'POST'])
-def placeCall():
-  account_sid = os.environ.get("ACCOUNT_SID", ACCOUNT_SID)
-  api_key = os.environ.get("API_KEY", API_KEY)
-  api_key_secret = os.environ.get("API_KEY_SECRET", API_KEY_SECRET)
-
-  client = Client(api_key, api_key_secret, account_sid)
-  call = client.calls.create(url=request.url_root + 'incoming', to='client:' + IDENTITY, from_='client:' + CALLER_ID)
-  return str(call.sid)
-
-@app.route('/', methods=['GET', 'POST'])
-def welcome():
-  resp = twilio.twiml.Response()
-  resp.say("Welcome to Twilio")
-  return str(resp)
-
-@app.route("/voice", methods=['GET', 'POST'])
-def call():
-    """Return TwiML for a moderated conference call."""
-    # Start our TwiML response
-    response = VoiceResponse()
-
-    # Start with a <Dial> verb
-    with Dial() as dial:
-        # If the caller is our MODERATOR, then start the conference when they
-        # join and end the conference when they leave
-        if request.values.get('From') == MODERATOR:
-            dial.conference(
-                'My conference',
-                start_conference_on_enter=True,
-                end_conference_on_exit=True)
+@app.route("/voice", methods=['POST'])
+def voice():
+    resp = VoiceResponse()
+    if "To" in request.form and request.form["To"] != '':
+        dial = Dial(caller_id=os.environ.get("TWILIO_CALLER_ID", TWILIO_CALLER_ID))
+        # wrap the phone number or client name in the appropriate TwiML verb
+        # by checking if the number given has only digits and format symbols
+        if phone_pattern.match(request.form["To"]):
+            dial.number(request.form["To"])
         else:
-            # Otherwise have the caller join as a regular participant
-            dial.conference('My conference', start_conference_on_enter=False)
+            dial.client(request.form["To"])
+        response.record()
+        resp.append(dial)
+    else:
+        resp.say("Thanks for calling!")
 
-    response.append(dial)
-    return str(response)
-  
-if __name__ == "__main__":
-  port = int(os.environ.get("PORT", 5000))
-  app.run(host='0.0.0.0', port=port, debug=True)
+    return Response(str(resp), mimetype='text/xml')
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
