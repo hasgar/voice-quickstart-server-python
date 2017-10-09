@@ -41,6 +41,17 @@ def outgoing():
   resp = twilio.twiml.Response()
   #resp.say("Congratulations! You have made your first oubound call! Good bye.")
   #return str(resp)
+  
+  client = Client(os.environ.get("ACCOUNT_SID", ACCOUNT_SID), os.environ.get("AUTH_TOKEN", AUTH_TOKEN))
+
+  # Make the call
+  call = client.api.account.calls\
+      .create(to="+919020708979",  # Any phone number
+              from_="+12517322701 ", # Must be a valid Twilio number
+  url="http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient")
+
+  print(call.sid)
+
   resp.dial("+13105551212")
   # If the dial fails:
   resp.say("The call failed, or the remote party hung up. Goodbye.")
