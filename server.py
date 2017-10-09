@@ -38,13 +38,9 @@ def token():
 
 @app.route('/outgoing', methods=['GET', 'POST'])
 def outgoing():
-  client = Client(account_sid, auth_token)
-  call = client.calls.create(
-    to="+14155551212",
-    from_="+18652344422",
-    url="http://demo.twilio.com/docs/voice.xml"
-)
-  return str(call)
+  resp = twilio.twiml.Response()
+  resp.say("Congratulations! You have made your first oubound call! Good bye.")
+  return str(resp)
 
 @app.route('/incoming', methods=['GET', 'POST'])
 def incoming():
