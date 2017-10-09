@@ -39,8 +39,11 @@ def token():
 @app.route('/outgoing', methods=['GET', 'POST'])
 def outgoing():
   resp = twilio.twiml.Response()
-  resp.say("Congratulations! You have made your first oubound call! Good bye.")
-  return str(resp)
+  #resp.say("Congratulations! You have made your first oubound call! Good bye.")
+  #return str(resp)
+  resp.dial("+13105551212")
+  # If the dial fails:
+  resp.say("The call failed, or the remote party hung up. Goodbye.")
 
 @app.route('/incoming', methods=['GET', 'POST'])
 def incoming():
