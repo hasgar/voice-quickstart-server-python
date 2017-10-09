@@ -46,7 +46,8 @@ def outgoing():
       .create(to="+919020708979",  # Any phone number
               from_="+12517322701 ", # Must be a valid Twilio number
   url="http://twimlets.com/holdmusic?Bucket=com.twilio.music.ambient")
-  return resp.say("Your call is connecting.please wait")
+  resp.say("Your call is connecting.please wait")
+  return str(resp)
 @app.route('/incoming', methods=['GET', 'POST'])
 def incoming():
   resp = twilio.twiml.Response()
